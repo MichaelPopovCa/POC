@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sensor Dashboard</title>
+    <style>
+        table {
+            margin-top: 10px;
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            border: 1px solid #444;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #ddd;
+        }
+    </style>
+</head>
+<body>
+<h1>Sensor Management</h1>
+
+<form id="add-form">
+    <label>Face:
+        <select id="face">
+            <option value="north">NORTH</option>
+            <option value="south">SOUTH</option>
+            <option value="east">EAST</option>
+            <option value="west">WEST</option>
+        </select>
+    </label>
+    <button type="submit">Add Sensor</button>
+</form>
+
+<form id="remove-form" style="margin-top: 20px;">
+    <label>Sensor ID to Remove:
+        <input type="text" id="remove-id" required>
+    </label>
+    <button type="submit">Remove Sensor</button>
+</form>
+
+<hr>
+
+<h1>
+    Sensor Report
+    <button id="clear-reports" style="margin-left: 20px;">🧹 Clear Reports</button>
+</h1>
+
+<h2>Hourly Aggregated Report</h2>
+<button id="report-hourly">Load Hourly Report</button>
+<table id="report-hourly-table">
+    <thead>
+    <tr>
+        <th>Hour</th>
+        <th>Average Temperature (°C)</th>
+    </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+
+<h2 style="margin-top: 30px;">Malfunctioning Sensors</h2>
+<button id="report-malfunctioning">Load Malfunctioning Sensors</button>
+<table id="report-malfunctioning-table">
+    <thead>
+    <tr>
+        <th>Sensor ID</th>
+        <th>Average Temperature (°C)</th>
+    </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+
+<script>
+    document.getElementById('add-form').onsubmit = async (e) => {
+        e.preventDefault();
+        const face = document.getElementById('face').value;
+        await fetch('/sensor/add?face=' + face, { method: 'POST' });
+        alert('Sensor added');
+    };
+
+    document.getElementById('remove-form').onsubmit = async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('remove-id').value;
+        await fetch('/sensor/remove', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(id)
+        });
+        alert('Sensor removed');
+    };
+
+    document.getElementById('report-hourly').onclick = async () => {
+        const response = await fetch('/monitoring/report/hourly-avg');
+        const data = await response.json();
+        const tableBody = document.querySelector('#report-hourly-table tbody');
+        tableBody.innerHTML = '';
+        data.forEach(row => {
+            const tr = document.createElement('tr');
+            const hour = new Date(row.hour).toLocaleString();
+            tr.innerHTML = `<td>${hour}</td><td>${row.averageTemperature.toFixed(2)}</td>`;
+            tableBody.appendChild(tr);
+        });
+    };
+
+    document.getElementById('report-malfunctioning').onclick = async () => {
+        const response = await fetch('/monitoring/report/malfunctioning');
+        const data = await response.json();
+        const tableBody = document.querySelector('#report-malfunctioning-table tbody');
+        tableBody.innerHTML = '';
+        data.forEach(row => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td>${row.id}</td><td>${row.averageTemperature.toFixed(2)}</td>`;
+            tableBody.appendChild(tr);
+        });
+    };
+
+    document.getElementById('clear-reports').onclick = () => {
+        document.querySelector('#report-hourly-table tbody').innerHTML = '';
+        document.querySelector('#report-malfunctioning-table tbody').innerHTML = '';
+    };
+</script>
+</body>
+</html>

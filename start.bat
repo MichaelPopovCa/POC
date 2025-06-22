@@ -1,0 +1,6 @@
+@echo off
+echo 🐳 Building image...
+docker build -t sensor-app .
+
+echo 🚀 Running container...
+docker run -p 8080:8080 sensor-app
